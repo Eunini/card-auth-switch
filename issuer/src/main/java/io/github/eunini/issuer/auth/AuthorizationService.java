@@ -229,6 +229,14 @@ public class AuthorizationService {
                     .update();
                 adjustHeld(acct.id(), e.amount());
                 status = "RECONCILED_TO_APPROVED";
+            } else if (approved && "ACTIVE".equals(e.status()) && a.authCode() != null
+                && !a.authCode().equals(e.authCode())) {
+                // Both approved (the issuer processed the request after the
+                // switch's deadline). One hold only; the approval code the
+                // merchant holds is the switch's, so clearing must match on it.
+                jdbc.sql("UPDATE authorizations SET auth_code = ?, source = ? WHERE id = ?")
+                    .params(a.authCode(), source, e.id()).update();
+                status = "RECONCILED_AUTH_CODE";
             } else if (!approved && "ACTIVE".equals(e.status())) {
                 jdbc.sql("UPDATE authorizations SET status = 'DECLINED', held_minor = 0, response_code = ? WHERE id = ?")
                     .params(a.responseCode(), e.id()).update();
@@ -248,10 +256,25 @@ public class AuthorizationService {
             insertAuth(r, acct.id(), null, r.amountMinor(), 0, null, a.responseCode(), "DECLINED", source, false);
             status = "RECORDED";
         }
-        jdbc.sql("INSERT INTO advices (advice_id, source, auth_ref, response_code, created_at) VALUES (?, ?, ?, ?, ?)")
-            .params(a.adviceId(), a.source(), r.authRef(), a.responseCode(), OffsetDateTime.now(clock))
+        jdbc.sql("""
+                INSERT INTO advices (advice_id, source, auth_ref, response_code, outcome, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)""")
+            .params(a.adviceId(), a.source(), r.authRef(), a.responseCode(), status, OffsetDateTime.now(clock))
             .update();
         return new StatusResponse(status);
+    }
+
+    public record AdviceView(String adviceId, String source, String responseCode, String outcome,
+                             OffsetDateTime createdAt) {}
+
+    public List<AdviceView> advicesFor(String authRef) {
+        return jdbc.sql("""
+                SELECT advice_id, source, response_code, outcome, created_at FROM advices
+                 WHERE auth_ref = ? ORDER BY created_at""")
+            .param(authRef)
+            .query((rs, i) -> new AdviceView(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4),
+                rs.getObject(5, OffsetDateTime.class)))
+            .list();
     }
 
     /** Full or partial reversal, idempotent by reversalRef. */

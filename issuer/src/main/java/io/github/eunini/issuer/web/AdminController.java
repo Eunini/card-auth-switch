@@ -61,6 +61,11 @@ public class AdminController {
         return Map.of("entryId", cards.deposit(id, d));
     }
 
+    @GetMapping("/advices")
+    public List<AuthorizationService.AdviceView> advices(@RequestParam String authRef) {
+        return auths.advicesFor(authRef);
+    }
+
     @PostMapping("/holds/expire")
     public Map<String, Integer> expire(@RequestParam(required = false) String asOf) {
         OffsetDateTime t = asOf == null ? OffsetDateTime.now(clock) : OffsetDateTime.parse(asOf);

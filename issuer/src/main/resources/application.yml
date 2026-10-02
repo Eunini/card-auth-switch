@@ -1,5 +1,5 @@
 server:
-  port: ${ISSUER_PORT:18080}
+  port: ${ISSUER_PORT:27180}
   tomcat:
     threads:
       max: 64

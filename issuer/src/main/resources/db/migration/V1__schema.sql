@@ -102,8 +102,11 @@ CREATE TABLE advices (
     source        VARCHAR(24)  NOT NULL,
     auth_ref      VARCHAR(80)  NOT NULL,
     response_code VARCHAR(2)   NOT NULL,
+    -- How the advice was applied (RECORDED, RECONCILED_AUTH_CODE, ...).
+    outcome       VARCHAR(32)  NOT NULL,
     created_at    TIMESTAMP WITH TIME ZONE NOT NULL
 );
+CREATE INDEX ix_advices_auth_ref ON advices (auth_ref);
 
 -- Clearing ------------------------------------------------------------------
 CREATE TABLE clearing_files (

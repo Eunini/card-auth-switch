@@ -123,6 +123,21 @@ class AuthorizationServiceTest extends IntegrationTest {
     }
 
     @Test
+    void lateIssuerApprovalPlusStandInAdviceGivesOneHoldWithTheMerchantsCode() {
+        // The issuer hung, the switch stood in (code S00002), then the issuer
+        // woke up and approved the same request with its own code.
+        var c = issue(10_000);
+        String r = ref();
+        var late = auths.authorize(auth(c, r, 3_000));
+        assertThat(late.approved()).isTrue();
+        var adv = new AdviceRequest("STIP-" + r, "SWITCH_STIP", "00", "S00002", auth(c, r, 3_000));
+        assertThat(auths.advice(adv).status()).isEqualTo("RECONCILED_AUTH_CODE");
+        var v = cards.account(c.accountId());
+        assertThat(v.heldMinor()).isEqualTo(3_000);
+        assertThat(v.holds().getFirst().authCode()).isEqualTo("S00002");
+    }
+
+    @Test
     void holdsExpire() {
         var c = issue(10_000);
         auths.authorize(auth(c, ref(), 4_000));
