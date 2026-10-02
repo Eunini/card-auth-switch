@@ -1,0 +1,55 @@
+{
+  "response_codes": [
+    [
+      "00",
+      46192
+    ]
+  ],
+  "stages": [
+    {
+      "count": 46192,
+      "max_us": 287231,
+      "mean_us": 45452.8,
+      "p50_us": 37535,
+      "p90_us": 79487,
+      "p99_us": 161919,
+      "stage": "total_auth"
+    },
+    {
+      "count": 46192,
+      "max_us": 116799,
+      "mean_us": 2511.4,
+      "p50_us": 985,
+      "p90_us": 5947,
+      "p99_us": 24671,
+      "stage": "hsm_pin"
+    },
+    {
+      "count": 46192,
+      "max_us": 121727,
+      "mean_us": 2385.8,
+      "p50_us": 876,
+      "p90_us": 5543,
+      "p99_us": 23551,
+      "stage": "hsm_arqc"
+    },
+    {
+      "count": 46156,
+      "max_us": 253823,
+      "mean_us": 40448.4,
+      "p50_us": 32719,
+      "p90_us": 73983,
+      "p99_us": 153983,
+      "stage": "issuer_authorize"
+    },
+    {
+      "count": 77,
+      "max_us": 9879,
+      "mean_us": 2779.4,
+      "p50_us": 1870,
+      "p90_us": 6575,
+      "p99_us": 9879,
+      "stage": "stip_journal_fsync"
+    }
+  ]
+}

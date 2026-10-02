@@ -1,0 +1,17 @@
+{
+  "mode": "issuer-api-direct",
+  "connections": 64,
+  "workers": 64,
+  "duration_s": 20.0,
+  "requests": 30587,
+  "throughput_per_s": 1529.0,
+  "p50_ms": 38.911,
+  "p90_ms": 67.455,
+  "p99_ms": 108.799,
+  "p999_ms": 153.727,
+  "max_ms": 249.087,
+  "response_codes": {
+    "00": 30587
+  },
+  "errors": 0
+}

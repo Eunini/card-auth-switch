@@ -1,0 +1,46 @@
+{
+  "response_codes": [
+    [
+      "00",
+      10339
+    ]
+  ],
+  "stages": [
+    {
+      "count": 10339,
+      "max_us": 226047,
+      "mean_us": 18312.6,
+      "p50_us": 13495,
+      "p90_us": 36543,
+      "p99_us": 78143,
+      "stage": "total_auth"
+    },
+    {
+      "count": 10339,
+      "max_us": 37631,
+      "mean_us": 748.5,
+      "p50_us": 314,
+      "p90_us": 1341,
+      "p99_us": 8703,
+      "stage": "hsm_pin"
+    },
+    {
+      "count": 10339,
+      "max_us": 37823,
+      "mean_us": 696.6,
+      "p50_us": 268,
+      "p90_us": 1255,
+      "p99_us": 8035,
+      "stage": "hsm_arqc"
+    },
+    {
+      "count": 10339,
+      "max_us": 225407,
+      "mean_us": 16760.0,
+      "p50_us": 11863,
+      "p90_us": 34335,
+      "p99_us": 75263,
+      "stage": "issuer_authorize"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "mode": "chip-pin",
+  "connections": 4,
+  "workers": 64,
+  "duration_s": 30.0,
+  "requests": 78449,
+  "throughput_per_s": 2615.0,
+  "p50_ms": 19.183,
+  "p90_ms": 47.519,
+  "p99_ms": 91.327,
+  "p999_ms": 148.607,
+  "max_ms": 219.519,
+  "response_codes": {
+    "00": 78449
+  },
+  "errors": 0
+}

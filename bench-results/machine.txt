@@ -1,0 +1,11 @@
+date_utc=2026-10-02T18:54:03Z
+cpu=Intel Core Processor (Broadwell, no TSX, IBRS)
+vcpus=8
+mem_gb=23
+loadavg_before=15.65 6.32 3.43
+kernel=5.15.0-191-generic
+rustc=rustc 1.99.0 (b940084d7 2026-09-28)
+java=openjdk version "21.0.12.1" 2026-08-18
+postgres=14.24 (Ubuntu 14.24-0ubuntu0.22.04.1)
+duration_s=30 workers=64 connections=4 cards=2000
+loadavg_after=22.38 12.32 6.01

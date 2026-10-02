@@ -1,0 +1,9 @@
+{
+  "iterations": 90916,
+  "iterations_per_s": 4545.0,
+  "max_ms": 149.631,
+  "mode": "hsm-direct (PIN verify + ARQC verify/ARPC per iteration)",
+  "p50_ms": 1.013,
+  "p99_ms": 12.863,
+  "workers": 8
+}
