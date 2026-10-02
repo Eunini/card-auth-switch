@@ -1,0 +1,40 @@
+[package]
+name = "hsm"
+description = "Simulated payment HSM: LMK-wrapped key hierarchy and a narrow command API over TCP. NOT a real HSM."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[features]
+default = ["server"]
+# The server (LMK, key unwrapping, crypto) is only compiled into the HSM
+# binary. Clients such as the switch depend on this crate with
+# default-features = false and get only the protocol and client.
+server = ["dep:cardcrypto", "dep:aes-gcm", "dep:aes", "dep:zeroize", "dep:rand", "dep:clap", "dep:tracing-subscriber", "dep:hex"]
+
+[[bin]]
+name = "hsm"
+required-features = ["server"]
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+futures.workspace = true
+bytes.workspace = true
+tracing.workspace = true
+cardcrypto = { workspace = true, optional = true }
+aes-gcm = { workspace = true, optional = true }
+aes = { workspace = true, optional = true }
+zeroize = { workspace = true, optional = true }
+rand = { workspace = true, optional = true }
+clap = { workspace = true, optional = true }
+tracing-subscriber = { workspace = true, optional = true }
+hex = { workspace = true, optional = true }
+
+[dev-dependencies]
+hex.workspace = true

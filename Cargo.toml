@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/iso8583", "crates/cardcrypto"]
+members = ["crates/iso8583", "crates/cardcrypto", "crates/hsm"]
 
 [workspace.package]
 version = "0.1.0"
@@ -29,6 +29,9 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 des = "0.8"
 aes-gcm = "0.10"
+aes = "0.8"
+zeroize = "1"
+subtle = "2"
 hmac = "0.12"
 sha2 = "0.10"
 rand = "0.8"

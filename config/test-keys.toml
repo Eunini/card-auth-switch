@@ -1,0 +1,20 @@
+# PUBLIC TEST KEYS - CLEAR VALUES, PUBLISHED ON PURPOSE.
+#
+# These are used by the card generator (playing the card personalisation
+# bureau) and the terminal simulator (playing the acquirer's PIN pad / HSM).
+# The switch never sees these clear values; it only holds the LMK-wrapped
+# key blocks in config/switch.toml. Never use these keys for real cards.
+
+# Zone PIN key shared between the simulated acquirer and the switch.
+zpk = "344961851583A21C04C237A41CDAE5C2"
+# Zone PIN key towards a downstream issuer zone (used by the PIN translation demo).
+zpk_issuer = "92DF8A32F4083D45578FA2C74AD96873"
+# PIN verification key (Visa PVV), PVKI 1.
+pvk = "205713FEB30DEAC2259E756D43CB527A"
+pvki = 1
+# Card verification key (CVV1 / iCVV).
+cvk = "97C43D7CD0B064642F62DFAE310DCE97"
+# Issuer master key for application cryptograms (MK-AC derivation).
+imk_ac = "F8CE3B7958FE02A840F4E525B6670B58"
+# HMAC key for PAN references (the issuer back office stores only HMAC(PAN)).
+pan_hmac = "D4B52FE4EBA46C791022A2131522F509FBB289B70F203F0E82EBFD15BFFC7F25"
