@@ -1,0 +1,18 @@
+[package]
+name = "cardcrypto"
+description = "Payment card cryptography built on RustCrypto primitives: ISO 9564 PIN blocks, Visa PVV, IBM 3624, CVV, ISO 9797-1 MAC, EMV key derivation, ARQC/ARPC"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+des.workspace = true
+thiserror.workspace = true
+subtle = "2"
+sha1 = "0.10"
+
+[dev-dependencies]
+hex.workspace = true
+proptest.workspace = true
+serde_json.workspace = true
