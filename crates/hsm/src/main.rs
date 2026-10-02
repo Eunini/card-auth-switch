@@ -16,7 +16,7 @@ struct Cli {
 enum Cmd {
     /// Run the HSM command server.
     Serve {
-        #[arg(long, default_value = "127.0.0.1:9100")]
+        #[arg(long, default_value = "127.0.0.1:19100")]
         listen: String,
         /// File with the 32-byte LMK in hex.
         #[arg(long)]

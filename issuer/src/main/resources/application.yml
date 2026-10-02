@@ -1,0 +1,47 @@
+server:
+  port: ${ISSUER_PORT:18080}
+  tomcat:
+    threads:
+      max: 64
+spring:
+  application:
+    name: issuer-backoffice
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: ${ISSUER_DB_URL:jdbc:postgresql://127.0.0.1:56543/issuer}
+    username: ${ISSUER_DB_USER:issuer}
+    password: ${ISSUER_DB_PASSWORD:issuer}
+    hikari:
+      maximum-pool-size: ${ISSUER_DB_POOL:24}
+  flyway:
+    enabled: true
+  jackson:
+    default-property-inclusion: non_null
+issuer:
+  # PUBLIC TEST KEY (same value as config/test-keys.toml pan_hmac). Used to
+  # turn PANs in clearing files into the PAN references the switch uses.
+  pan-hmac-key: ${ISSUER_PAN_HMAC_KEY:D4B52FE4EBA46C791022A2131522F509FBB289B70F203F0E82EBFD15BFFC7F25}
+  hold-days: 7
+  extended-hold-days: 30
+  hold-expiry-interval-ms: 60000
+logging:
+  level:
+    root: INFO
+    io.github.eunini.issuer: INFO
+---
+spring:
+  config:
+    activate:
+      on-profile: h2
+  datasource:
+    url: jdbc:h2:mem:issuer;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+---
+# Used by the test suite when ISSUER_TEST_PROFILE=pg (connection from ISSUER_DB_* env vars).
+spring:
+  config:
+    activate:
+      on-profile: pg
