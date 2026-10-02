@@ -32,3 +32,4 @@ chrono.workspace = true
 rand.workspace = true
 reqwest.workspace = true
 hdrhistogram.workspace = true
+hsm = { workspace = true, default-features = false }

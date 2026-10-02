@@ -1,0 +1,212 @@
+card-auth-switch demo transcript
+generated 2026-10-02 00:55:51 UTC by `scripts/demo.sh`
+acquirer terminal POS00001 -> switch (ISO 8583:1987 over TCP) -> simulated HSM + issuer back office
+All cards, keys and amounts are test data. PANs are masked in this transcript.
+
+== 1. Test cards (issued by the simulator's personalisation step) ==
+   Alice                  999001******1000  CVN 18  account #1
+   Bob                    999001******1018  CVN 10  account #2
+   Carol                  999001******1026  CVN 18  account #3
+   Dave (reported lost)   999001******1034  CVN 18  account #4
+
+== 2. Network management: sign-on and echo test (0800/0810) ==
+-> 0800 STAN 000101 F070=001 (sign-on)
+<- 0810 RC 00 (approved) in 0.8 ms
+-> 0800 STAN 000102 F070=301 (echo test)
+<- 0810 RC 00 (approved) in 0.4 ms
+
+== 3. Alice: chip + PIN purchase $42.50 (CVN 18, EMV common session key) ==
+   request as sent (sensitive fields masked):
+     MTI 0100
+       F002 Primary account number                   999001******1000
+       F003 Processing code                          000000
+       F004 Amount, transaction                      000000004250
+       F007 Transmission date and time               1002005551
+       F011 System trace audit number                000103
+       F012 Time, local transaction (hhmmss)         005551
+       F013 Date, local transaction (MMDD)           1002
+       F014 Date, expiration (YYMM)                  2912
+       F018 Merchant type (MCC)                      5411
+       F022 Point of service entry mode              051
+       F023 Card sequence number                     000
+       F025 Point of service condition code          00
+       F032 Acquiring institution identification code 41000001
+       F035 Track 2 data                             999001******1000=****
+       F037 Retrieval reference number               627500000103
+       F041 Card acceptor terminal identification    POS00001
+       F042 Card acceptor identification code        MERCH000000001 
+       F043 Card acceptor name/location              CORNER GROCERY         SPRINGFIELD  US  
+       F049 Currency code, transaction               840
+       F052 Personal identification number data      [PIN block redacted]
+       F055 ICC data (EMV, BER-TLV)                  9F26=7FB89751C003FAA6 9F27=80 9F10=06011203A00000 9F37=7F71CF4E 9F36=0001 95=0000000000 9A=261002 9C=00 9F02=000000004250 5F2A=0840 82=1800 9F1A=0840 9F03=000000000000 5F34=00 84=A0000000031010 9F33=E0F8C8 9F34=420300
+-> 0100 STAN 000103 999001******1000 $42.50 entry 051 +PIN ARQC 7FB89751C003FAA6 ATC 1
+<- 0110 RC 00 (approved) in 54.7 ms auth code 909818
+   card checks ARPC (tag 91 = 04AD5CEF00800000): issuer authenticated
+   response:
+     MTI 0110
+       F002 Primary account number                   999001******1000
+       F003 Processing code                          000000
+       F004 Amount, transaction                      000000004250
+       F007 Transmission date and time               1002005551
+       F011 System trace audit number                000103
+       F012 Time, local transaction (hhmmss)         005551
+       F013 Date, local transaction (MMDD)           1002
+       F022 Point of service entry mode              051
+       F032 Acquiring institution identification code 41000001
+       F037 Retrieval reference number               627500000103
+       F038 Authorization identification response    909818
+       F039 Response code                            00
+       F041 Card acceptor terminal identification    POS00001
+       F042 Card acceptor identification code        MERCH000000001 
+       F049 Currency code, transaction               840
+       F055 ICC data (EMV, BER-TLV)                  91=04AD5CEF00800000
+   Alice: ledger $500.00 held $42.50 available $457.50
+
+== 4. Acquirer retransmits the same 0100 (lost response): switch replays, no second hold ==
+-> 0100 STAN 000103 999001******1000 $42.50 entry 051 +PIN
+<- 0110 RC 00 (approved) in 0.4 ms auth code 909818
+   Alice: ledger $500.00 held $42.50 available $457.50
+
+== 5. Alice: wrong PIN ==
+-> 0100 STAN 000104 999001******1000 $19.99 entry 051 +PIN ARQC 1D811554C7406727 ATC 2
+<- 0110 RC 55 (incorrect PIN) in 1.4 ms
+   no ARPC in response (cryptogram was not accepted)
+
+== 6. Alice: second purchase $120.00, then the terminal reverses it (0400), then repeats the reversal (0401) ==
+-> 0100 STAN 000105 999001******1000 $120.00 entry 051 +PIN ARQC 7EBD5A94E6EB903E ATC 3
+<- 0110 RC 00 (approved) in 15.9 ms auth code 981321
+   card checks ARPC (tag 91 = 27A5680B00800000): issuer authenticated
+   Alice: ledger $500.00 held $162.50 available $337.50
+-> 0400 STAN 000106 999001******1000 $120.00 entry - orig STAN 000105
+<- 0410 RC 00 (approved) in 23.2 ms
+-> 0401 STAN 000106 999001******1000 $120.00 entry - orig STAN 000105
+<- 0410 RC 00 (approved) in 0.2 ms
+   Alice: ledger $500.00 held $42.50 available $457.50
+
+== 7. Bob: forged cryptogram (ARQC bit flipped after the card computed it), CVN 10 card ==
+-> 0100 STAN 000107 999001******1018 $15.00 entry 051 +PIN ARQC 856D29767C6294C2 ATC 1
+<- 0110 RC 82 (cryptogram/CVV check failed) in 1.0 ms
+   no ARPC in response (cryptogram was not accepted)
+
+== 8. Bob: $75.00 with only $20.00 available ==
+-> 0100 STAN 000108 999001******1018 $75.00 entry 051 +PIN ARQC 151385F5E05DA7BA ATC 2
+<- 0110 RC 51 (insufficient funds) in 18.0 ms
+   card checks ARPC (tag 91 = 20F4AE89AD3837BA3531): issuer authenticated
+   (a decline still carries an ARPC, with ARC = '51', so the card can trust the decline)
+
+== 9. Dave: card reported lost ==
+-> 0100 STAN 000109 999001******1034 $25.00 entry 051 +PIN ARQC E787AB700BA84A54 ATC 1
+<- 0110 RC 41 (lost card, pick up) in 0.8 ms
+   no ARPC in response (cryptogram was not accepted)
+
+== 10. Carol: magnetic stripe fallback $15.00 (CVV in track 2 verified by the HSM) ==
+-> 0100 STAN 000110 999001******1026 $15.00 entry 901
+<- 0110 RC 00 (approved) in 17.5 ms auth code 314527
+
+== 11. Carol: $50.00 fuel pre-authorization, partially reversed to the $30.00 actually pumped (F95) ==
+-> 0100 STAN 000111 999001******1026 $50.00 entry 051 +PIN ARQC 766AFB0FE75A9BF5 ATC 1
+<- 0110 RC 00 (approved) in 18.2 ms auth code 084211
+   card checks ARPC (tag 91 = 0A76AFBE00800000): issuer authenticated
+-> 0420 STAN 000112 999001******1026 $50.00 entry - orig STAN 000111 replacement $30.00
+<- 0430 RC 00 (approved) in 9.8 ms
+   Carol: ledger $300.00 held $45.00 available $255.00
+
+== 12. ISSUER HANGS: the issuer process is frozen (SIGSTOP), connections stay open, nothing answers ==
+   $ scripts/issuer.sh hang
+   Carol: chip + PIN $60.00 -> switch waits for its 250 ms issuer deadline, then stands in
+-> 0100 STAN 000113 999001******1026 $60.00 entry 051 +PIN ARQC B7F29800EE84C2FA ATC 2
+<- 0110 RC 00 (approved) in 253.0 ms auth code S71794 [STAND-IN]
+   card checks ARPC (tag 91 = E2135B6100800000): issuer authenticated
+   Carol: chip + PIN $35.00 -> second deadline miss opens the circuit breaker
+-> 0100 STAN 000114 999001******1026 $35.00 entry 051 +PIN ARQC 5501A29FEC0C3AE1 ATC 3
+<- 0110 RC 00 (approved) in 259.1 ms auth code S98667 [STAND-IN]
+   card checks ARPC (tag 91 = 7AF08F5200800000): issuer authenticated
+   Alice: $400.00 -> circuit open, no waiting; above the $250.00 stand-in per-transaction limit
+-> 0100 STAN 000115 999001******1000 $400.00 entry 051 +PIN ARQC 69FEEC928B2705CA ATC 4
+<- 0110 RC 91 (issuer unavailable) in 2.1 ms [STAND-IN]
+   card checks ARPC (tag 91 = 41275AC000000000): issuer authenticated
+   Alice: wrong PIN is still caught in stand-in (the HSM is up; only the issuer is down)
+-> 0100 STAN 000116 999001******1000 $5.00 entry 051 +PIN ARQC 747E8A7A498E2C4B ATC 5
+<- 0110 RC 55 (incorrect PIN) in 0.3 ms
+   no ARPC in response (cryptogram was not accepted)
+
+== 13. ISSUER RESUMES (SIGCONT): late requests and replayed 0120 advices meet at the issuer ==
+   $ scripts/issuer.sh resume
+   The frozen JVM still processes the two authorizations that timed out at the switch;
+   the replayed stand-in advices carry the same auth_ref, so the issuer keeps ONE hold each
+   and adopts the stand-in approval code the merchant actually received.
+   advices reconciled 0.3 s after resume
+     advice STIP-POS00001-1002-000113-627500000113   -> RECONCILED_AUTH_CODE
+     advice STIP-POS00001-1002-000114-627500000114   -> RECONCILED_AUTH_CODE
+   Carol: ledger $300.00 held $140.00 available $160.00
+     hold POS00001-1002-000113-627500000113    $60.00 held   $60.00 code S71794 ACTIVE     STIP_ADVICE
+     hold POS00001-1002-000114-627500000114    $35.00 held   $35.00 code S98667 ACTIVE     STIP_ADVICE
+     hold POS00001-1002-000111-627500000111    $30.00 held   $30.00 code 084211 ACTIVE     ONLINE
+     hold POS00001-1002-000110-627500000110    $15.00 held   $15.00 code 314527 ACTIVE     ONLINE
+
+== 14. ISSUER CRASHES (kill -9): connection refused, immediate stand-in, advice stored on disk ==
+   $ scripts/issuer.sh kill
+-> 0100 STAN 000117 999001******1026 $20.00 entry 051 +PIN ARQC E5D500BCA76AD84B ATC 4
+<- 0110 RC 00 (approved) in 2.4 ms auth code S11915 [STAND-IN]
+   card checks ARPC (tag 91 = 4E3D3CB200800000): issuer authenticated
+
+== 15. ISSUER RESTART: switch probes health, closes the circuit and forwards the stored advice ==
+   $ scripts/issuer.sh start
+   issuer restarted and healthy in 10.5 s
+   stand-in advice applied 0.5 s after the issuer came back
+   Carol: ledger $300.00 held $160.00 available $140.00
+     hold POS00001-1002-000117-627500000117    $20.00 held   $20.00 code S11915 ACTIVE     STIP_ADVICE
+     hold POS00001-1002-000113-627500000113    $60.00 held   $60.00 code S71794 ACTIVE     STIP_ADVICE
+     hold POS00001-1002-000114-627500000114    $35.00 held   $35.00 code S98667 ACTIVE     STIP_ADVICE
+     hold POS00001-1002-000111-627500000111    $30.00 held   $30.00 code 084211 ACTIVE     ONLINE
+     hold POS00001-1002-000110-627500000110    $15.00 held   $15.00 code 314527 ACTIVE     ONLINE
+
+== 16. Clearing: acquirer presentments arrive in the daily clearing file ==
+   file (PANs masked here; the file itself carries full PANs):
+     HDR|CASCLR|1|ACQ-20261002005603|20261002|ACQ410000
+     PRES|ACQ-20261002005603-1|74100006275000000000017|999001******1000|909818|627500000103|POS00001|20261002|4250|840|5411|CORNER GROCERY|1|1
+     PRES|ACQ-20261002005603-2|74100006275000000000025|999001******1026|314527|627500000110|POS00001|20261002|1500|840|5411|CORNER GROCERY|1|1
+     PRES|ACQ-20261002005603-3|74100006275000000000033|999001******1026|084211|627500000111|POS00001|20261002|3000|840|5542|FUEL STATION|1|1
+     PRES|ACQ-20261002005603-5|74100006275000000000058|999001******1026|S71794|627500000113|POS00001|20261002|6000|840|5411|CORNER GROCERY|1|1
+     PRES|ACQ-20261002005603-6|74100006275000000000066|999001******1026|S11915|627500000117|POS00001|20261002|2000|840|5411|CORNER GROCERY|1|1
+     PRES|ACQ-20261002005603-4|74100006275000000000041|999001******1000|000000|000000000000|ECOM0001|20261002|999|840|4899|STREAMING SUBSCRIPTION|1|1
+     TRL|6|17749
+   ingest result:
+     ACQ-20261002005603-1   PRES    $42.50  MATCHED                POS00001-1002-000103-627500000103
+     ACQ-20261002005603-2   PRES    $15.00  MATCHED                POS00001-1002-000110-627500000110
+     ACQ-20261002005603-3   PRES    $30.00  MATCHED                POS00001-1002-000111-627500000111
+     ACQ-20261002005603-5   PRES    $60.00  MATCHED                POS00001-1002-000113-627500000113
+     ACQ-20261002005603-6   PRES    $20.00  MATCHED                POS00001-1002-000117-627500000117
+     ACQ-20261002005603-4   PRES     $9.99  FORCE_POST             (no authorization)
+   Alice: ledger $447.51 held $0.00 available $447.51
+   Carol: ledger $175.00 held $35.00 available $140.00
+
+== 17. Dispute: Alice says the $42.50 groceries were never delivered (reason 13.1) ==
+   opened DSP-1 state OPENED chargeback deadline 2027-01-30
+   Alice (provisional credit): ledger $490.01 held $0.00 available $490.01
+   chargeback without evidence refused: issuer returned 422 Unprocessable Entity: {"error":"MISSING_EVIDENCE","message":"reason code 13.1 requires CARDHOLDER_LETTER"}
+   evidence added; chargeback raised -> CHARGEBACK_SENT
+   outgoing chargeback file to the network:
+     HDR|CASCLR|1|ISS-OUT-1|20261002|ISSUER
+     CHBK|OUT-1|74100006275000000000017|DSP-1|4250|840|13.1
+     TRL|1|4250
+   network clearing confirms the chargeback: CHARGEBACK_SETTLED
+   dispute state CHARGEBACK_SETTLED (acquirer may re-present until 2026-11-01)
+   audit trail:
+     -                  -> OPENED             by cardholder order never delivered
+     OPENED             -> OPENED             by cardholder evidence added: CARDHOLDER_LETTER
+     OPENED             -> CHARGEBACK_SENT    by ops        chargeback 13.1 sent to network
+     CHARGEBACK_SENT    -> CHARGEBACK_SETTLED by network    chargeback settled in clearing
+   Alice: ledger $490.01 held $0.00 available $490.01
+
+== 18. Ledger check: trial balance recomputed from every posting ==
+     ISSUER_CASH-840          D      $920.00
+     NETWORK_SETTLEMENT-840   C      $134.99
+     DISPUTE_RECEIVABLE-840   D        $0.00
+     CHARGEBACK_LOSS-840      D        $0.00
+     CLEARING_SUSPENSE-840    D        $0.00
+   total debits $1182.49 = total credits $1182.49: balanced=true materialised balances match=true
+
+== 19. Sign-off ==
+-> 0800 STAN 000118 F070=002 (sign-off)
+<- 0810 RC 00 (approved) in 0.5 ms

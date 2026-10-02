@@ -1577,6 +1577,7 @@ dependencies = [
  "hdrhistogram",
  "hex",
  "hmac",
+ "hsm",
  "iso8583",
  "rand 0.8.8",
  "reqwest",

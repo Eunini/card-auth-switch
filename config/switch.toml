@@ -3,15 +3,15 @@
 # public test LMK (config/lmk.test.hex). The switch cannot unwrap them;
 # only the HSM process can.
 
-listen = "127.0.0.1:18583"
+listen = "127.0.0.1:27583"
 idle_timeout_secs = 300
 max_in_flight_per_conn = 512
 
-hsm_addr = "127.0.0.1:19100"
+hsm_addr = "127.0.0.1:27910"
 hsm_pool = 4
 hsm_timeout_ms = 500
 
-issuer_url = "http://127.0.0.1:18080"
+issuer_url = "http://127.0.0.1:27180"
 # Deadline for the issuer's answer before the switch stands in.
 issuer_timeout_ms = 250
 card_refresh_secs = 5
@@ -36,6 +36,6 @@ daily_limit_minor = 60000
 
 [circuit]
 # Consecutive issuer failures that open the circuit (go straight to STIP).
-failure_threshold = 3
+failure_threshold = 2
 # How long to stay open before probing the issuer again.
 open_ms = 1000
