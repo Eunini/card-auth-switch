@@ -1,0 +1,41 @@
+# Switch configuration for local runs, the demo and benchmarks.
+# Key material appears ONLY as key blocks wrapped under the simulator's
+# public test LMK (config/lmk.test.hex). The switch cannot unwrap them;
+# only the HSM process can.
+
+listen = "127.0.0.1:8583"
+idle_timeout_secs = 300
+max_in_flight_per_conn = 512
+
+hsm_addr = "127.0.0.1:9100"
+hsm_pool = 4
+hsm_timeout_ms = 500
+
+issuer_url = "http://127.0.0.1:8080"
+# Deadline for the issuer's answer before the switch stands in.
+issuer_timeout_ms = 250
+card_refresh_secs = 5
+card_snapshot_file = ".run/card-snapshot.json"
+stip_journal = ".run/stip-journal.log"
+
+# Public test key used to compute PAN references (HMAC-SHA256); the issuer
+# back office uses the same key and never stores PANs.
+pan_hmac_key = "D4B52FE4EBA46C791022A2131522F509FBB289B70F203F0E82EBFD15BFFC7F25"
+
+[keys]
+zpk = "K1P0EB812E3FC9E8DF9961FD0FA749E1B43EBE381F6972EC9D9F633069ACD2A4345CA6790FA43007972E108BDD08"   # KCV ED6B93
+pvk = "K1V20875EE524026BF65C76E00FF80B94D84A5C99DADC08B35A355009916A60020E0096C60802C07972D45E4640E"   # KCV 868B9D
+cvk = "K1C01489A0DD15FAE55F435CF9F7D2CFC6E7647D1848B849BC7E8EBC9AF4DDE7188AC4D36CAD6B7BBCEFCE36C62C"   # KCV 748913
+imk_ac = "K1E0A93442328FD3203A3F4AF38ECBF7D7EE493819FAE41A3A6D54E0FCFCCA51B5F20793B6FE152B160C79FBA1AE" # KCV 91778A
+
+[stand_in]
+# Maximum single amount approved while the issuer is unavailable.
+per_txn_limit_minor = 25000
+# Maximum cumulative stand-in approvals per card per day.
+daily_limit_minor = 60000
+
+[circuit]
+# Consecutive issuer failures that open the circuit (go straight to STIP).
+failure_threshold = 3
+# How long to stay open before probing the issuer again.
+open_ms = 1000
