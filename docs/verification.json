@@ -1,0 +1,16 @@
+{
+  "verified_utc": "2026-10-05",
+  "rust_tests": 63,
+  "java_tests": 27,
+  "failures": 0,
+  "skipped": 0,
+  "rust_checks": [
+    "cargo fmt --all --check",
+    "cargo clippy --workspace --all-targets -- -D warnings",
+    "cargo test --workspace"
+  ],
+  "java_checks": [
+    "./mvnw -B verify"
+  ],
+  "java_context": "27 tests on H2 and another 27 on isolated PostgreSQL 14"
+}

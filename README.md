@@ -249,7 +249,7 @@ Run with `scripts/bench.sh`. Raw JSON is in [`bench-results/`](bench-results/).
 **Machine.** Contabo VPS, 8 vCPU (Intel Broadwell, virtualized), 23 GB RAM, Ubuntu 22.04,
 PostgreSQL 14 (`fsync` and `synchronous_commit` on), OpenJDK 21, Rust 1.99.
 
-**Load caveat.** The VPS was **shared with three other build agents during the runs**. Load
+**Load caveat.** The VPS was **shared with other CPU-intensive workloads during the runs**. Load
 average was 15.7 at the start of the main run and 23.3 at the start of the low-concurrency run,
 on 8 vCPUs. The numbers below are therefore pessimistic, and also noisy. Everything runs on the
 same box: load generator, switch, HSM, issuer JVM and PostgreSQL.
