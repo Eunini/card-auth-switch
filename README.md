@@ -1,5 +1,7 @@
 # card-auth-switch
 
+**[Open the live demo](https://leads.realalma.com/fintech/card-auth-switch/)** · Try chip authorization, incorrect PIN, tampered cryptogram, and insufficient-funds scenarios. All data is synthetic.
+
 An ISO 8583 card authorization switch in Rust, with EMV cryptogram verification through a
 simulated HSM, and a Java issuer back office (double-entry ledger, holds, clearing, disputes).
 

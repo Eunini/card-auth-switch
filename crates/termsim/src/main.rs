@@ -52,6 +52,17 @@ enum Cmd {
         #[arg(long, default_value = "scripts/issuer.sh")]
         issuer_ctl: String,
     },
+    /// One isolated browser-demo authorization using a fresh synthetic card.
+    WebDemo {
+        #[arg(long)]
+        switch: String,
+        #[arg(long)]
+        issuer: String,
+        #[arg(long)]
+        sequence: u64,
+        #[arg(long, value_parser = ["approve", "wrong-pin", "tampered", "insufficient"])]
+        scenario: String,
+    },
     /// End-to-end load over TCP through the switch.
     Bench {
         #[arg(long, default_value = "127.0.0.1:27583")]
@@ -185,6 +196,97 @@ async fn main() -> anyhow::Result<()> {
                 },
             )
             .await?;
+        }
+        Cmd::WebDemo {
+            switch,
+            issuer,
+            sequence,
+            scenario,
+        } => {
+            anyhow::ensure!(
+                (1..=999_999_999).contains(&sequence),
+                "invalid card sequence"
+            );
+            use termsim::{
+                cards::{issue, CardSpec},
+                client::AcquirerClient,
+                emvcard::EmvCard,
+                terminal::{Terminal, TxnOpts},
+            };
+            let mut rng = rand::thread_rng();
+            let (secret, record) = issue(
+                &keys,
+                sequence,
+                &CardSpec::standard("Synthetic demo customer", 18, 50_000),
+                &mut rng,
+            )?;
+            let bank = Issuer::new(&issuer);
+            let imported = bank.import(&[record]).await?;
+            // Allow the switch's one-second background snapshot refresh to see the new card.
+            tokio::time::sleep(Duration::from_millis(1500)).await;
+            let mut card = EmvCard::personalise(secret, &keys)?;
+            let mut terminal = Terminal::new(&format!("{:08}", sequence % 100_000_000), &keys);
+            let client = AcquirerClient::connect(&switch).await?;
+            let _ = client.send(&terminal.sign_on()).await?;
+            let pin = if scenario == "wrong-pin" {
+                if card.secret.pin == "0000" {
+                    "1111"
+                } else {
+                    "0000"
+                }
+            } else {
+                &card.secret.pin
+            };
+            let mut opts = TxnOpts::chip_pin(pin);
+            opts.tamper_arqc = scenario == "tampered";
+            let amount = if scenario == "insufficient" {
+                60_000
+            } else {
+                2_500
+            };
+            let built = terminal.auth(&mut card, amount, &opts)?;
+            let (response, latency) = client.send(&built.msg).await?;
+            let code = response.get_str(39).unwrap_or("??").to_string();
+            let arpc_verified = response
+                .get(55)
+                .and_then(|b| iso8583::tlv::parse(b).ok())
+                .and_then(|v| iso8583::tlv::find(&v, 0x91).map(|b| b.to_vec()))
+                .zip(built.cryptogram.as_ref())
+                .map(|(v, c)| card.verify_arpc(c, &v))
+                .unwrap_or(false);
+            let held = bank
+                .get(&format!("/api/v1/accounts/{}", imported[0].account_id))
+                .await?;
+            let mut reversal_code = None;
+            let mut replay_code = None;
+            let mut replay_held = None;
+            if code == "00" {
+                let (replay, _) = client.send(&built.msg).await?;
+                replay_code = replay.get_str(39).map(str::to_string);
+                replay_held = Some(
+                    bank.get(&format!("/api/v1/accounts/{}", imported[0].account_id))
+                        .await?["heldMinor"]
+                        .clone(),
+                );
+                let (reverse, _) = client
+                    .send(&terminal.reversal(&built.msg, None, false))
+                    .await?;
+                reversal_code = reverse.get_str(39).map(str::to_string);
+            }
+            let final_account = bank
+                .get(&format!("/api/v1/accounts/{}", imported[0].account_id))
+                .await?;
+            let trial = bank.get("/api/v1/ledger/trial-balance").await?;
+            println!(
+                "{}",
+                serde_json::json!({
+                    "scenario": scenario, "responseCode": code, "requestMti": "0100", "responseMti": response.mti.to_string(),
+                    "amountMinor": amount, "latencyMs": latency.as_secs_f64() * 1000.0,
+                    "arpcVerified": arpc_verified, "replayCode": replay_code, "replayHeldMinor": replay_held, "reversalCode": reversal_code,
+                    "heldAccount": held, "finalAccount": final_account,
+                    "balanced": trial["balanced"], "balancesMatch": trial["materialisedBalancesMatch"]
+                })
+            );
         }
         Cmd::Bench {
             switch,
