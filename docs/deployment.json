@@ -2,5 +2,7 @@
   "publicUrl": "https://leads.realalma.com/fintech/card-auth-switch/",
   "verification": "docs/public-deployment-verification.json",
   "gatewaySource": "https://github.com/Eunini/quorum-ledger/tree/main/ops/portfolio-demo",
-  "data": "synthetic"
+  "data": "synthetic",
+  "applicationFeatures": "Issue and fund cards; manage card status; authorize purchases; inspect persistent holds; reverse or settle authorizations; attach dispute evidence; process chargeback clearing and representment; and record resolutions.",
+  "authentication": "Persistent accounts, secure session cookies, private workspaces, CSRF protection, and team roles"
 }

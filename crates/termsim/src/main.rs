@@ -52,6 +52,52 @@ enum Cmd {
         #[arg(long, default_value = "scripts/issuer.sh")]
         issuer_ctl: String,
     },
+    IssueCard {
+        #[arg(long)]
+        issuer: String,
+        #[arg(long)]
+        sequence: u64,
+        #[arg(long)]
+        name: String,
+        #[arg(long)]
+        opening_minor: i64,
+        #[arg(long)]
+        out: String,
+    },
+    AuthorizeCard {
+        #[arg(long)]
+        switch: String,
+        #[arg(long)]
+        issuer: String,
+        #[arg(long)]
+        card: String,
+        #[arg(long)]
+        request_file: String,
+        #[arg(long)]
+        amount_minor: i64,
+        #[arg(long)]
+        merchant: String,
+        #[arg(long, value_parser=["chip-pin","chip","magstripe"])]
+        mode: String,
+        #[arg(long, value_parser=["valid","wrong-pin","tampered"])]
+        verification: String,
+    },
+    ReverseCard {
+        #[arg(long)]
+        switch: String,
+        #[arg(long)]
+        request_file: String,
+    },
+    SettleCard {
+        #[arg(long)]
+        issuer: String,
+        #[arg(long)]
+        card: String,
+        #[arg(long)]
+        request_file: String,
+        #[arg(long)]
+        record_id: String,
+    },
     /// One isolated browser-demo authorization using a fresh synthetic card.
     WebDemo {
         #[arg(long)]
@@ -197,6 +243,57 @@ async fn main() -> anyhow::Result<()> {
             )
             .await?;
         }
+        Cmd::IssueCard {
+            issuer,
+            sequence,
+            name,
+            opening_minor,
+            out,
+        } => println!(
+            "{}",
+            termsim::application::issue_card(&keys, &issuer, sequence, &name, opening_minor, &out)
+                .await?
+        ),
+        Cmd::AuthorizeCard {
+            switch,
+            issuer,
+            card,
+            request_file,
+            amount_minor,
+            merchant,
+            mode,
+            verification,
+        } => println!(
+            "{}",
+            termsim::application::authorize(
+                &keys,
+                &switch,
+                &issuer,
+                &card,
+                &request_file,
+                amount_minor,
+                &merchant,
+                &mode,
+                &verification
+            )
+            .await?
+        ),
+        Cmd::ReverseCard {
+            switch,
+            request_file,
+        } => println!(
+            "{}",
+            termsim::application::reverse(&keys, &switch, &request_file).await?
+        ),
+        Cmd::SettleCard {
+            issuer,
+            card,
+            request_file,
+            record_id,
+        } => println!(
+            "{}",
+            termsim::application::settle(&issuer, &card, &request_file, &record_id).await?
+        ),
         Cmd::WebDemo {
             switch,
             issuer,

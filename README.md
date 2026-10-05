@@ -1,6 +1,6 @@
 # card-auth-switch
 
-**[Open the live demo](https://leads.realalma.com/fintech/card-auth-switch/)** · Try chip authorization, incorrect PIN, tampered cryptogram, and insufficient-funds scenarios. All data is synthetic.
+**[Open the application](https://leads.realalma.com/fintech/card-auth-switch/)** · Issue and fund cards; manage card status; authorize purchases; inspect persistent holds; reverse or settle authorizations; attach dispute evidence; process chargeback clearing and representment; and record resolutions.
 
 An ISO 8583 card authorization switch in Rust, with EMV cryptogram verification through a
 simulated HSM, and a Java issuer back office (double-entry ledger, holds, clearing, disputes).
@@ -9,6 +9,18 @@ simulated HSM, and a Java issuer back office (double-entry ledger, holds, cleari
 > by any scheme. It is **not PCI DSS compliant**. The "HSM" is a normal process that holds its
 > master key in memory, so it is **not a real HSM**. Every card, key and amount in this
 > repository is test data. The keys in `config/` are published here on purpose and are public.
+
+## Use the application
+
+Create an account, sign in, or open a private workspace and save your account later. One account works across all four applications. Workspaces have persistent records, searchable tables, activity logs, and team invitations. Your saved data is retained when you reload or sign in from another device.
+
+Terminal requests use the Rust switch, EMV verification, simulated HSM, and Java issuer. A purchase remains held until reversed or settled. Settlement and dispute transitions produce actual double-entry postings.
+
+All funds, cards, institutions, and sample transactions are synthetic. The applications do not connect to real banking or card networks.
+
+[Application workflows and hosting details](docs/application.md)
+
+![Application workspace](docs/application.png)
 
 ## What a card switch does
 

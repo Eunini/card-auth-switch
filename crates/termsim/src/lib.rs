@@ -11,3 +11,5 @@ pub mod emvcard;
 pub mod issuer;
 pub mod keys;
 pub mod terminal;
+
+pub mod application;
